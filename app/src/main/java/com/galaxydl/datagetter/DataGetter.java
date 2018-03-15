@@ -1,7 +1,7 @@
 package com.galaxydl.datagetter;
 
 import android.app.Activity;
-import android.view.View;
+import android.content.Context;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -36,6 +36,8 @@ public enum DataGetter {
 
     private OkHttpClient client;
 
+    private boolean inited = false;
+
     @FunctionalInterface
     public interface OnFinishListener<T> {
         /**
@@ -47,6 +49,25 @@ public enum DataGetter {
          * @param e       请求中发生的错误，若正常则为null
          */
         void onFinish(List<T> results, @Nullable Exception e);
+    }
+
+    /**
+     * 必须首先调用{@code init()}
+     *
+     * @param context
+     */
+    public void init(Context context) {
+        threadPool = new ThreadPoolExecutor(THREAD_CORE_SIZE,
+                THREAD_MAX_SIZE,
+                THREAD_KEEP_ALIVE_TIME,
+                THREAD_TIME_UNIT,
+                new LinkedBlockingDeque<>());
+
+        client = new OkHttpClient.Builder()
+                .cookieJar(CookieManager.INSTANCE)
+                .build();
+        CookieManager.INSTANCE.init(context);
+        inited = true;
     }
 
     /**
@@ -75,6 +96,7 @@ public enum DataGetter {
                         OnFinishListener<T> listener,
                         Class clazz,
                         Activity currentActivity) {
+        checkInit();
         threadPool.execute(() -> {
             Request request = new Request.Builder()
                     .url(option.getUrl())
@@ -96,6 +118,7 @@ public enum DataGetter {
                          OnFinishListener<T> listener,
                          Class clazz,
                          Activity currentActivity) {
+        checkInit();
         threadPool.execute(() -> {
             Request request = new Request.Builder()
                     .url(option.getUrl())
@@ -157,18 +180,10 @@ public enum DataGetter {
         currentActivity.runOnUiThread(() -> listener.onFinish(result, e));
     }
 
-    private void init() {
-        threadPool = new ThreadPoolExecutor(THREAD_CORE_SIZE,
-                THREAD_MAX_SIZE,
-                THREAD_KEEP_ALIVE_TIME,
-                THREAD_TIME_UNIT,
-                new LinkedBlockingDeque<>());
-
-        client = new OkHttpClient();
-    }
-
-    DataGetter(){
-        init();
+    private void checkInit() {
+        if (!inited) {
+            throw new IllegalStateException("init() must be called first!");
+        }
     }
 
 }
