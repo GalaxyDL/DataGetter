@@ -1,6 +1,7 @@
 package com.galaxydl.datagetter;
 
 import android.content.Context;
+import android.util.Log;
 
 import java.util.List;
 
@@ -14,6 +15,7 @@ import okhttp3.HttpUrl;
 
 public enum CookieManager implements CookieJar {
     INSTANCE;
+    private static final String TAG = "CookieManager";
 
     private PersistentCookieStore cookieStore;
 

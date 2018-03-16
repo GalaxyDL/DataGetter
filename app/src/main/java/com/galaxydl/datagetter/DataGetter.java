@@ -2,6 +2,7 @@ package com.galaxydl.datagetter;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -18,7 +19,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * DataGetter 提供了利用okhttp向后端请求数据并用gson解析的功能。
+ * DataGetter 提供了利用okhttp向后端请求数据并用fastjson解析的功能。
  *
  * @author Galaxy
  * @since 2017-11-27
@@ -31,6 +32,8 @@ public enum DataGetter {
     private final static int THREAD_MAX_SIZE = 20;
     private final static long THREAD_KEEP_ALIVE_TIME = 10;
     private final static TimeUnit THREAD_TIME_UNIT = TimeUnit.SECONDS;
+
+    private final static ArrayList<?> NULL_RESULT = new ArrayList<>();
 
     private ThreadPoolExecutor threadPool;
 
@@ -80,10 +83,10 @@ public enum DataGetter {
      * @param <T>      要解析成的对象的类型
      */
     public <T> void get(String url,
-                        OnFinishListener<T> listener,
                         Class clazz,
-                        Activity currentActivity) {
-        get(new GettingOption(url), listener, clazz, currentActivity);
+                        Activity currentActivity,
+                        OnFinishListener<T> listener) {
+        get(new GettingOption(url), clazz, currentActivity, listener);
     }
 
     /**
@@ -93,9 +96,9 @@ public enum DataGetter {
      * @param <T>      要解析成的对象的类型
      */
     public <T> void get(GettingOption option,
-                        OnFinishListener<T> listener,
                         Class clazz,
-                        Activity currentActivity) {
+                        Activity currentActivity,
+                        OnFinishListener<T> listener) {
         checkInit();
         threadPool.execute(() -> {
             Request request = new Request.Builder()
@@ -115,9 +118,9 @@ public enum DataGetter {
      * @param <T>      要解析成的对象的类型
      */
     public <T> void post(GettingOption option,
-                         OnFinishListener<T> listener,
                          Class clazz,
-                         Activity currentActivity) {
+                         Activity currentActivity,
+                         OnFinishListener<T> listener) {
         checkInit();
         threadPool.execute(() -> {
             Request request = new Request.Builder()
@@ -137,7 +140,7 @@ public enum DataGetter {
             response = client.newCall(request)
                     .execute();
         } catch (IOException e) {
-            doOnFinish(null, e, listener, currentActivity);
+            doOnFinish(NULL_RESULT, e, listener, currentActivity);
         }
         if (response != null) {
             List<T> results;
@@ -145,7 +148,7 @@ public enum DataGetter {
                 results = parseJSON(response.body().string(), clazz);
                 doOnFinish(results, null, listener, currentActivity);
             } catch (IOException e) {
-                doOnFinish(null, e, listener, currentActivity);
+                doOnFinish(NULL_RESULT, e, listener, currentActivity);
             }
         }
     }
@@ -160,10 +163,11 @@ public enum DataGetter {
      */
     @SuppressWarnings("unchecked")
     private <T> List<T> parseJSON(String s, Class c) {
+        if (s == null || s.isEmpty()) return (ArrayList<T>) NULL_RESULT;
         List<T> result = new ArrayList<>();
-        if (s == null) return result;
         JSONArray jsonArray = JSON.parseArray(s);
         for (Object aJson : jsonArray) {
+            Log.d(TAG, "parseJSON: " + aJson.toString());
             result.add((T) JSON.parseObject(aJson.toString(), c));
         }
         return result;

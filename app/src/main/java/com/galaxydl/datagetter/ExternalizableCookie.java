@@ -12,9 +12,13 @@ import okhttp3.Cookie;
  */
 
 public class ExternalizableCookie implements Externalizable {
+    public static final long serialVersionUID = 2114151658939974797L;
 
+    private transient Cookie cookie;
 
-    private Cookie cookie;
+    public ExternalizableCookie() {
+
+    }
 
     public ExternalizableCookie(Cookie cookie) {
         this.cookie = cookie;
@@ -42,7 +46,6 @@ public class ExternalizableCookie implements Externalizable {
                 .name((String) in.readObject())
                 .value((String) in.readObject())
                 .expiresAt(in.readLong())
-                .domain((String) in.readObject())
                 .path((String) in.readObject());
         if (in.readBoolean()) {
             builder.secure();

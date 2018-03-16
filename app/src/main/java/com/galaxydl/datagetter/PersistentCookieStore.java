@@ -13,8 +13,10 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import okhttp3.Cookie;
 import okhttp3.HttpUrl;
@@ -31,7 +33,7 @@ public class PersistentCookieStore {
 
     private final SharedPreferences sharedPreferences;
 
-    private HashMap<String, ConcurrentHashMap<String, Cookie>> cookies;
+    private HashMap<String, ConcurrentMap<String, Cookie>> cookies;
 
     public PersistentCookieStore(Context context) {
         sharedPreferences = context.getSharedPreferences(COOKIE_PREFS, Context.MODE_PRIVATE);
@@ -43,6 +45,7 @@ public class PersistentCookieStore {
     public void add(List<Cookie> cookies) {
         if (cookies != null && cookies.size() > 0) {
             for (Cookie cookie : cookies) {
+                Log.d(TAG, "add: adding" + cookie);
                 add(cookie);
             }
         }
@@ -73,6 +76,7 @@ public class PersistentCookieStore {
                 result.addAll(cookies.get(key).values());
             }
         }
+        Log.d(TAG, "get: " + result);
         return result;
     }
 
@@ -96,6 +100,7 @@ public class PersistentCookieStore {
         for (String name : names.split(COOKIE_NAME_DELIMITER)) {
             cookie = initCookie(name);
             if (cookie != null) {
+                Log.d(TAG, "initCookies: " + cookie);
                 cookies.put(name, cookie);
             }
         }
@@ -121,8 +126,8 @@ public class PersistentCookieStore {
         return toHexString(bos.toByteArray());
     }
 
-    private Cookie decodeCookie(String decodedCookie) {
-        ByteArrayInputStream bis = new ByteArrayInputStream(toByteArray(decodedCookie));
+    private Cookie decodeCookie(String encodedCookie) {
+        ByteArrayInputStream bis = new ByteArrayInputStream(toByteArray(encodedCookie));
         Cookie cookie = null;
         try {
             ObjectInputStream ois = new ObjectInputStream(bis);
@@ -135,21 +140,23 @@ public class PersistentCookieStore {
 
     private String toHexString(byte[] bytes) {
         StringBuilder sb = new StringBuilder(bytes.length * 2);
+        int v;
         for (byte i : bytes) {
-            if (i < 16) {
+            v = i & 0xff;
+            if (v < 16) {
                 sb.append('0');
             }
-            sb.append(Integer.toHexString(i));
+            sb.append(Integer.toHexString(v));
         }
-        return sb.toString();
+        return sb.toString().toUpperCase(Locale.US);
     }
 
     private byte[] toByteArray(String hexString) {
-        final int len = hexString.length() / 2;
-        byte[] result = new byte[len];
-        for (int i = 0; i < len; i++) {
-            result[i / 2] = (byte) (Character.digit(hexString.charAt(i / 2), 16) * 16
-                    + Character.digit(hexString.charAt(i / 2 + 1), 16));
+        final int len = hexString.length();
+        byte[] result = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            result[i / 2] = (byte) (Character.digit(hexString.charAt(i), 16) * 16
+                    + Character.digit(hexString.charAt(i + 1), 16));
         }
         return result;
     }
