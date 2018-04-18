@@ -14,25 +14,16 @@ public class GettingOption {
     /**
      * 请求类型，true为POST，false为GET，默认为false
      */
-    private boolean isPost = false;
+    private boolean post;
     /**
      * 若请求类型为true则需要{@see okhttp3.RequestBody}
      */
     private RequestBody requestBody;
 
-    public GettingOption(String url) {
-        this.url = url;
-    }
-
-    public GettingOption(String url, RequestBody requestBody) {
-        this.url = url;
-        this.requestBody = requestBody;
-    }
-
-    public GettingOption(String url, boolean isPost, RequestBody requestBody) {
-        this.url = url;
-        this.isPost = isPost;
-        this.requestBody = requestBody;
+    private GettingOption(Builder builder) {
+        this.url = builder.url;
+        this.post = builder.post;
+        this.requestBody = builder.requestBody;
     }
 
     public String getUrl() {
@@ -44,11 +35,11 @@ public class GettingOption {
     }
 
     public boolean isPost() {
-        return isPost;
+        return post;
     }
 
     public void setPost(boolean post) {
-        isPost = post;
+        this.post = post;
     }
 
     public RequestBody getRequestBody() {
@@ -57,5 +48,30 @@ public class GettingOption {
 
     public void setRequestBody(RequestBody requestBody) {
         this.requestBody = requestBody;
+    }
+
+    public static class Builder {
+        String url;
+        boolean post;
+        RequestBody requestBody;
+
+        public Builder(String url) {
+            this.url = url;
+            post = false;
+        }
+
+        public GettingOption build() {
+            return new GettingOption(this);
+        }
+
+        public Builder post() {
+            post = true;
+            return this;
+        }
+
+        public Builder requestBody(RequestBody requestBody) {
+            this.requestBody = requestBody;
+            return this;
+        }
     }
 }

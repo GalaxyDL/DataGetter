@@ -11,7 +11,7 @@ import okhttp3.Cookie;
  * Created by Galaxy on 2018/3/15.
  */
 
-public class ExternalizableCookie implements Externalizable {
+final class ExternalizableCookie implements Externalizable {
     public static final long serialVersionUID = 2114151658939974797L;
 
     private transient Cookie cookie;

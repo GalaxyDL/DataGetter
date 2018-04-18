@@ -9,6 +9,7 @@ import com.alibaba.fastjson.JSONArray;
 
 import okhttp3.*;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -20,6 +21,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * DataGetter 提供了利用okhttp向后端请求数据并用fastjson解析的功能。
+ * 在使用之前需要先调用{@code init()}方法
+ * 使用完毕之后需要调用{@code close()}方法
  *
  * @author Galaxy
  * @since 2017-11-27
@@ -40,6 +43,7 @@ public enum DataGetter {
     private OkHttpClient client;
 
     private boolean inited = false;
+    private boolean closed = false;
 
     @FunctionalInterface
     public interface OnFinishListener<T> {
@@ -51,7 +55,7 @@ public enum DataGetter {
          * @param results 请求所返回的结果
          * @param e       请求中发生的错误，若正常则为null
          */
-        void onFinish(List<T> results, @Nullable Exception e);
+        void onFinish(@NotNull List<T> results, @Nullable Exception e);
     }
 
     /**
@@ -59,7 +63,7 @@ public enum DataGetter {
      *
      * @param context
      */
-    public void init(Context context) {
+    public final void init(Context context) {
         threadPool = new ThreadPoolExecutor(THREAD_CORE_SIZE,
                 THREAD_MAX_SIZE,
                 THREAD_KEEP_ALIVE_TIME,
@@ -71,6 +75,15 @@ public enum DataGetter {
                 .build();
         CookieManager.INSTANCE.init(context);
         inited = true;
+    }
+
+    /**
+     * 程序退出之前需要关闭{@code DataGetter}
+     * 释放线程资源
+     */
+    public final void close() {
+        threadPool.shutdown();
+        closed = true;
     }
 
     /**
@@ -86,20 +99,23 @@ public enum DataGetter {
                         Class clazz,
                         Activity currentActivity,
                         OnFinishListener<T> listener) {
-        get(new GettingOption(url), clazz, currentActivity, listener);
+        get(new GettingOption.Builder(url).build(), clazz, currentActivity, listener);
     }
 
     /**
+     * 通过GET请求获取json数据
+     * 并进行解析
+     *
      * @param option   见{@see GettOption}
      * @param listener 完成结果的监听器
      * @param clazz    要解析成的对象的类型
      * @param <T>      要解析成的对象的类型
      */
-    public <T> void get(GettingOption option,
-                        Class clazz,
-                        Activity currentActivity,
-                        OnFinishListener<T> listener) {
-        checkInit();
+    public final <T> void get(GettingOption option,
+                              Class clazz,
+                              Activity currentActivity,
+                              OnFinishListener<T> listener) {
+        checkState();
         threadPool.execute(() -> {
             Request request = new Request.Builder()
                     .url(option.getUrl())
@@ -117,11 +133,11 @@ public enum DataGetter {
      * @param clazz    要解析成的对象的类型
      * @param <T>      要解析成的对象的类型
      */
-    public <T> void post(GettingOption option,
-                         Class clazz,
-                         Activity currentActivity,
-                         OnFinishListener<T> listener) {
-        checkInit();
+    public final <T> void post(GettingOption option,
+                               Class clazz,
+                               Activity currentActivity,
+                               OnFinishListener<T> listener) {
+        checkState();
         threadPool.execute(() -> {
             Request request = new Request.Builder()
                     .url(option.getUrl())
@@ -184,9 +200,12 @@ public enum DataGetter {
         currentActivity.runOnUiThread(() -> listener.onFinish(result, e));
     }
 
-    private void checkInit() {
+    private void checkState() {
         if (!inited) {
             throw new IllegalStateException("init() must be called first!");
+        }
+        if (closed) {
+            throw new IllegalStateException("DataGetter has been closed!");
         }
     }
 

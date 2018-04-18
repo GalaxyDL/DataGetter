@@ -25,7 +25,7 @@ import okhttp3.HttpUrl;
  * Created by Galaxy on 2018/3/15.
  */
 
-public class PersistentCookieStore {
+final class PersistentCookieStore {
     private static final String TAG = "PersistentCookieStore";
     private static final String COOKIE_PREFS = "CookiePrefs";
     private static final String COOKIE_NAME_PREFIX = "cookie_";

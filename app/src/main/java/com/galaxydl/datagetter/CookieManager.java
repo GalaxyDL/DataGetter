@@ -13,7 +13,7 @@ import okhttp3.HttpUrl;
  * Created by Galaxy on 2018/3/15.
  */
 
-public enum CookieManager implements CookieJar {
+enum CookieManager implements CookieJar {
     INSTANCE;
     private static final String TAG = "CookieManager";
 
