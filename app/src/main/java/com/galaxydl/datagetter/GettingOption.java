@@ -19,11 +19,24 @@ public class GettingOption {
      * 若请求类型为true则需要{@see okhttp3.RequestBody}
      */
     private RequestBody requestBody;
+    /**
+     * 是否使用https，true为使用，默认为false
+     */
+    private boolean https;
 
     private GettingOption(Builder builder) {
         this.url = builder.url;
         this.post = builder.post;
         this.requestBody = builder.requestBody;
+        this.https = builder.https;
+    }
+
+    public boolean isHttps() {
+        return https;
+    }
+
+    public void setHttps(boolean https) {
+        this.https = https;
     }
 
     public String getUrl() {
@@ -54,9 +67,11 @@ public class GettingOption {
         String url;
         boolean post;
         RequestBody requestBody;
+        boolean https;
 
         public Builder(String url) {
             this.url = url;
+            https = false;
             post = false;
         }
 
@@ -73,5 +88,11 @@ public class GettingOption {
             this.requestBody = requestBody;
             return this;
         }
+
+        public Builder https() {
+            https = true;
+            return this;
+        }
+
     }
 }
