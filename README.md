@@ -8,9 +8,8 @@ Json数据请求
 
 使用前先进行初始化：
 
-    DataGetter.INSTANCE.init(context.getApplicationContext());
-
->注意：这里需要使用applicationContext，否则会发生内存泄漏。
+    DataGetter.INSTANCE.init(getContext());
+    
 获取一个Json数组：
 
     DataGetter.INSTANCE.get(url, class, mActivity, mOnFinishListener);
