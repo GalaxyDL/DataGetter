@@ -1,7 +1,7 @@
 # DataGetter
 Json数据请求
 
-##使用方法
+## 使用方法
 获取单例对象：
 
     DataGetter.INSTANCE;
@@ -23,7 +23,7 @@ Json数据请求
 
     DataGetter.INSTANCE.close();
 
-##自定义GettingOption
+## 自定义GettingOption
 GettingOption使用Builder模式创建新的对象
 比如通过https获取：
 
